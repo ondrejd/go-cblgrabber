@@ -7,6 +7,11 @@
 *.dll
 *.so
 *.dylib
+go-cblgrabber
+
+# Created databases
+*.db
+*.sqlite
 
 # Test binary, built with `go test -c`
 *.test
