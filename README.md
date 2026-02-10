@@ -4,27 +4,13 @@ Data grabber for ČBL (Czech Basketball League) from [https.//nbl.basketball](ht
 
 ## Usage
 
+Here is self-explaining example:
+
 ```bash
-$ ./go-cblgrabber -help
-
-Usage of ./go-cblgrabber:
--database string
-        Path to the database (default "./data.db")
--initdb
-        Initialize database - existing data will be erased
--season string
-        Season we want to grab (default "2020/21")
-
 # 1. starting with new database
 $ ./go-cblgrabbeer -initdb -season=2022/23
-
-Grabbing URL: https://nbl.basketball/zapasy?y=2022&p1=0&c=0&d_od=&d_do=&k=0
-
 # 2. continue grabbing
 $ ./go-cblgrabber -season=2023/24
-
-Grabbing URL: https://nbl.basketball/zapasy?y=2023&p1=0&c=0&d_od=&d_do=&k=0
-
 # 3. check database
 $ ls data.db -l
 
@@ -50,6 +36,14 @@ sqlite> SELECT id, name FROM teams;
 12|BK ARMEX ENERGY Děčín
 13|Sršni Photomate Písek
 sqlite> 
-
 ```
 
+You may use `./go-cblgrabber -help` for help.
+
+## Thanks
+
+We are using these libraries:
+
+- [__go-sqlite3__](https://github.com/mattn/go-sqlite3)
+- [__goquery__](https://github.com/PuerkitoBio/goquery)
+  
