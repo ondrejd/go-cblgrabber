@@ -2,8 +2,10 @@ package main
 
 import (
 	"database/sql"
+	"encoding/base64"
 	"flag"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"strconv"
@@ -228,13 +230,13 @@ func ParseAndSaveGameResults(db *sql.DB, td1 *goquery.Selection, td2 *goquery.Se
 		pointsAway[i], _ = strconv.Atoi(parts[1])
 
 		if i > 0 && i < selLen {
-			pointsHome[i] = pointsHome[i] - SumIntArray(pointsHome[0:i])
-			pointsAway[i] = pointsAway[i] - SumIntArray(pointsAway[0:i])
+			pointsHome[i] = pointsHome[i] - sumIntArray(pointsHome[0:i])
+			pointsAway[i] = pointsAway[i] - sumIntArray(pointsAway[0:i])
 		}
 	})
 
-	pointsHome[selLen] = totalHome - SumIntArray(pointsHome[0:selLen])
-	pointsAway[selLen] = totalAway - SumIntArray(pointsAway[0:selLen])
+	pointsHome[selLen] = totalHome - sumIntArray(pointsHome[0:selLen])
+	pointsAway[selLen] = totalAway - sumIntArray(pointsAway[0:selLen])
 
 	for i := range 6 {
 		if pointsHome[i] != -1 && pointsAway[i] != -1 {
@@ -260,7 +262,7 @@ func ParseAndSaveGameResults(db *sql.DB, td1 *goquery.Selection, td2 *goquery.Se
 	}
 }
 
-func SumIntArray(numbers []int) int {
+func sumIntArray(numbers []int) int {
 	result := 0
 	for i := 0; i < len(numbers); i++ {
 		result += numbers[i]
@@ -306,13 +308,91 @@ func ConvertPlayedAtDateFormat(dt string) (string, error) {
 	return ret, err
 }
 
+// ================================================================================
+
+// ================================================================================
+
+func importTeamLogos(db *sql.DB, limit int) {
+	// 1. Načtení prvních 100 záznamů (URL je plné, data jsou prázdná)
+	rows, err := db.Query(`
+		SELECT id, logo_url 
+		FROM teams 
+		WHERE (logo_url IS NOT NULL AND logo_url != '') 
+		  AND (logo_data IS NULL OR length(logo_data) = 0)
+		LIMIT ?
+	`, limit)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer rows.Close()
+
+	var teams []Team
+	for rows.Next() {
+		var t Team
+		err = rows.Scan(&t.Id, &t.LogoUrl)
+		if err != nil {
+			log.Fatal(err)
+		}
+		teams = append(teams, t)
+	}
+
+	fmt.Printf("Nalezeno %d týmů ke zpracování.\n", len(teams))
+
+	// 2. Stažení a aktualizace
+	for _, team := range teams {
+		fmt.Printf("Stahuji logo pro tým ID %d z: %s\n", team.Id, team.LogoUrl)
+
+		imgBytes, err := downloadImage(team.LogoUrl)
+		if err != nil {
+			log.Printf("Nepodařilo se stáhnout %s: %v\n", team.LogoUrl, err)
+			continue
+		}
+
+		// Uložení binárních dat (BLOB) zpět do databáze
+		_, err = db.Exec("UPDATE teams SET logo_data = ? WHERE id = ?", getBase64Image(imgBytes), team.Id)
+		if err != nil {
+			log.Printf("Chyba při ukládání do DB pro ID %d: %v\n", team.Id, err)
+		} else {
+			fmt.Printf("Logo pro tým ID %d úspěšně uloženo.\n", team.Id)
+		}
+	}
+}
+
+// downloadImage stáhne obsah z URL a vrátí ho jako slice bajtů
+func downloadImage(url string) ([]byte, error) {
+	resp, err := http.Get(url)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("špatný stavový kód: %d", resp.StatusCode)
+	}
+
+	return io.ReadAll(resp.Body)
+}
+
+func getBase64Image(bytes []byte) string {
+	// Optional: Detect MIME type to create a Data URI (e.g., "data:image/png;base64,..." )
+	mimeType := http.DetectContentType(bytes)
+	base64Str := base64.StdEncoding.EncodeToString(bytes)
+
+	return "data:" + mimeType + ";base64," + base64Str
+}
+
+// ================================================================================
+
 func main() {
 	database := flag.String("database", "./data.db", "Path to the database")
-	season := flag.String("season", "2020/21", "Season we want to grab")
 	initDb := flag.Bool("initdb", false, "Initialize database - existing data will be erased")
+	// Volba pro import zápasů/výsledků dle sezóny
+	season := flag.String("season", "", "Season we want to grab (eg '2020/21')")
+	// Volba pro import log jednotlivých týmů
+	logos := flag.Bool("logos", false, "Download logos of single teams (either \"-logos\" or \"-season\" alone is possible)")
+	// Volba pro import detailů jednotlivých zápasů
+	// TODO ...
 	flag.Parse()
-
-	year := strings.Split(*season, "/")[0]
 
 	// 1. Inicializace SQLite databáze
 	db, err := sql.Open("sqlite3", *database)
@@ -325,6 +405,15 @@ func main() {
 	if *initDb == true {
 		InitDb(db)
 	}
+
+	// Odbočka na stahování log jednotlivých týmů
+	if *season == "" && *logos == true {
+		limit := flag.Int("limit", 100, "Limit of items to parse")
+		importTeamLogos(db, *limit)
+		return
+	}
+
+	year := strings.Split(*season, "/")[0]
 
 	// Získáme ID sezóny, kterou chceme stáhnout
 	seasonId, err := GetSeasonId(db, *season)

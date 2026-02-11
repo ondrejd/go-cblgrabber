@@ -6,6 +6,17 @@
     "configurations": [
 
         {
+            "name": "Launch Team Logos",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}",
+            "args": [
+                "-database=./data.db",
+                "-logos"
+            ]
+        },
+        {
             "name": "Launch 2025/26",
             "type": "go",
             "request": "launch",

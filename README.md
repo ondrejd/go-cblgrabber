@@ -11,6 +11,8 @@ Here is self-explaining example:
 $ ./go-cblgrabbeer -initdb -season=2022/23
 # 2. continue grabbing
 $ ./go-cblgrabber -season=2023/24
+# 3. import team logos
+$ ./go-cblgrabber -logos
 # 3. check database
 $ ls data.db -l
 
