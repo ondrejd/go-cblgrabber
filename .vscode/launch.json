@@ -6,6 +6,73 @@
     "configurations": [
 
         {
+            "name": "Launch Player Profiles (2020/21)",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}",
+            "args": [
+                "-database=./data.db",
+                "-profiles",
+                "-profiles-limit=100"
+            ],
+            "presentation": {
+                "hidden": false,
+                "group": "BasketBet 2020/21",
+                "order": 4
+            }
+        },
+        {
+            "name": "Launch Reviews (2020/21)",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}",
+            "args": [
+                "-database=./data.db",
+                "-reviews",
+                "-reviews-limit=100"
+            ],
+            "presentation": {
+                "hidden": false,
+                "group": "BasketBet 2020/21",
+                "order": 3
+            }
+        },
+        {
+            "name": "Launch 2021/22",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}",
+            "args": [
+                "-database=./data.db",
+                "-season=2021/22"
+            ],
+            "presentation": {
+                "hidden": false,
+                "group": "BasketBet 2020/21",
+                "order": 2
+            }
+        },
+        {
+            "name": "Launch 2020/21 + InitDb",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}",
+            "args": [
+                "-database=./data.db",
+                "-season=2020/21",
+                "-initdb"
+            ],
+            "presentation": {
+                "hidden": false,
+                "group": "BasketBet 2020/21",
+                "order": 1
+            }
+        },
+        {
             "name": "Launch Team Logos",
             "type": "go",
             "request": "launch",
@@ -58,29 +125,6 @@
             "args": [
                 "-database=./data.db",
                 "-season=2022/23"
-            ]
-        },
-        {
-            "name": "Launch 2021/22",
-            "type": "go",
-            "request": "launch",
-            "mode": "auto",
-            "program": "${workspaceFolder}",
-            "args": [
-                "-database=./data.db",
-                "-season=2021/22"
-            ]
-        },
-        {
-            "name": "Launch 2020/21 + InitDb",
-            "type": "go",
-            "request": "launch",
-            "mode": "auto",
-            "program": "${workspaceFolder}",
-            "args": [
-                "-database=./data.db",
-                "-season=2020/21",
-                "-initdb"
             ]
         }
     ]
