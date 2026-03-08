@@ -1306,11 +1306,11 @@ func main() {
 
 	help := "Add on of these subcommands: 'games', 'players', 'reviews' or 'teams'!"
 
-	// Např. `./go-cligrabber season --database=./data.db --season=2020/2021`
-	// nebo `./go-cligrabber teams --database=./data.db --season=2020/2021 --limit=50`
-	// nebo `./go-cligrabber reviews --database=./data.db --limit=50`
-	// nebo `./go-cligrabber players --database=./data.db --limit=50`
-	if len(os.Args) < 5 {
+	// Např. `./go-cligrabber season -database ./data.db -season 2020/2021`
+	// nebo `./go-cligrabber teams -database ./data.db -season 2020/2021 - limit 50`
+	// nebo `./go-cligrabber reviews -database ./data.db -limit 50`
+	// nebo `./go-cligrabber players -database ./data.db -limit 50`
+	if len(os.Args) < 4 {
 		fmt.Fprintln(os.Stderr, help)
 		os.Exit(0)
 	}
