@@ -91,14 +91,16 @@
             }
         },
         {
-            "name": "Launch Team Logos",
+            "name": "Launch 2025/26 and init DB",
             "type": "go",
             "request": "launch",
             "mode": "auto",
             "program": "${workspaceFolder}",
             "args": [
-                "-database=./data.db",
-                "-logos"
+                "season",
+                "-database=./data-cbl-2025.sqlite",
+                "-season=2025/26",
+                "-initdb"
             ]
         },
         {

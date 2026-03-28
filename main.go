@@ -23,6 +23,15 @@ const COMPETITION_ID int = 1
 
 const BASE_URL = "https://nbl.basketball"
 
+func ConnectDb(database string) *sql.DB {
+	db, err := sql.Open("sqlite3", database+"?_busy_timeout=1000&_journal_mode=WAL")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return db
+}
+
 func InitDb(db *sql.DB) {
 	// Definice všech SQL příkazů
 	queries := []string{
@@ -658,8 +667,8 @@ func parseAndSaveGameResults(db *sql.DB, td1 *goquery.Selection, td2 *goquery.Se
 		return
 	}
 
-	pointsHome := [6]int{-1, -1, -1, -1, -1, -1}
-	pointsAway := [6]int{-1, -1, -1, -1, -1, -1}
+	pointsHome := [7]int{-1, -1, -1, -1, -1, -1, -1}
+	pointsAway := [7]int{-1, -1, -1, -1, -1, -1, -1}
 
 	sel.Each(func(i int, div *goquery.Selection) {
 		html, _ := div.Html()
@@ -1307,7 +1316,7 @@ func main() {
 	help := "Add on of these subcommands: 'games', 'players', 'reviews' or 'teams'!"
 
 	// Např. `./go-cligrabber season -database ./data.db -season 2020/2021`
-	// nebo `./go-cligrabber teams -database ./data.db -season 2020/2021 - limit 50`
+	// nebo `./go-cligrabber teams -database ./data.db -season 2020/2021 -limit 50`
 	// nebo `./go-cligrabber reviews -database ./data.db -limit 50`
 	// nebo `./go-cligrabber players -database ./data.db -limit 50`
 	if len(os.Args) < 4 {
@@ -1321,49 +1330,51 @@ func main() {
 
 	// Volba pro import zápasů/výsledků dle sezóny
 	fsSeason := flag.NewFlagSet("season", flag.ExitOnError)
-	fsSeason.StringVar(&database, "database", "./data.db", "Path to the database")
+	fsSeason.StringVar(&database, "database", "./data.sqlite", "Path to the database")
 	fsSeason.BoolVar(&initDb, "initdb", false, "Initialize database - existing data will be erased")
 	fsSeason.StringVar(&season, "season", "", "Season we want to grab (eg '2020/21')")
 
 	// Volba pro import hráčů jednotlivých týmů
 	fsTeams := flag.NewFlagSet("teams", flag.ExitOnError)
-	fsTeams.StringVar(&database, "database", "./data.db", "Path to the database")
+	fsTeams.StringVar(&database, "database", "./data.sqlite", "Path to the database")
 	fsTeams.StringVar(&season, "season", "", "Season we want to grab (eg '2020/21')")
 	fsTeams.IntVar(&limit, "limit", 50, "Limit of items to download and parse")
 
 	// Volba pro import detailů jednotlivých zápasů
 	fsReviews := flag.NewFlagSet("reviews", flag.ExitOnError)
-	fsReviews.StringVar(&database, "database", "./data.db", "Path to the database")
+	fsReviews.StringVar(&database, "database", "./data.sqlite", "Path to the database")
 	fsReviews.IntVar(&limit, "limit", 50, "Limit of items to download and parse")
 
 	// Volba pro import detailů jednotlivých hráčů
 	fsPlayers := flag.NewFlagSet("players", flag.ExitOnError)
-	fsPlayers.StringVar(&database, "database", "./data.db", "Path to the database")
+	fsPlayers.StringVar(&database, "database", "./data.sqlite", "Path to the database")
 	fsPlayers.IntVar(&limit, "limit", 50, "Limit of items to download and parse")
 	flag.Parse()
 
-	// 1. Inicializace SQLite databáze
-	db, err := sql.Open("sqlite3", database+"?_busy_timeout=1000&_journal_mode=WAL")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer db.Close()
-
+	// Hlavní rozcestník
 	switch os.Args[1] {
 	case "season":
 		if err := fsSeason.Parse(os.Args[2:]); err == nil {
+			db := ConnectDb(database)
+			defer db.Close()
 			importSeasonGames(db, initDb, season)
 		}
 	case "teams":
 		if err := fsTeams.Parse(os.Args[2:]); err == nil {
+			db := ConnectDb(database)
+			defer db.Close()
 			importTeamPlayers(db, season, limit)
 		}
 	case "reviews":
 		if err := fsReviews.Parse(os.Args[2:]); err == nil {
+			db := ConnectDb(database)
+			defer db.Close()
 			importGameReviews(db, limit)
 		}
 	case "players":
 		if err := fsPlayers.Parse(os.Args[2:]); err == nil {
+			db := ConnectDb(database)
+			defer db.Close()
 			importPlayerDetails(db, limit)
 		}
 	default:
