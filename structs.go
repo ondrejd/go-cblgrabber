@@ -268,7 +268,7 @@ func (s Season) FindOrCreate(db *sql.DB) (Season, error) {
 type SeasonPart struct {
 	Id                int64
 	SeasonId          int64
-	SuccessorId       int64 // Předcházející část sezóny (je-li)
+	PreviousId        int64 // Předcházející část sezóny (je-li)
 	CompetitionTypeId int64
 	Name              string
 	IsCurrent         bool
@@ -277,9 +277,9 @@ type SeasonPart struct {
 func (sp SeasonPart) FindOrCreate(db *sql.DB) (SeasonPart, error) {
 	// Pokus o nalezení existujícího záznamu
 	err := db.QueryRow(
-		"SELECT id, season_id, successor_id, competition_type_id, name, is_current FROM season_parts WHERE season_id = ? AND name = ?",
+		"SELECT id, season_id, previous_id, competition_type_id, name, is_current FROM season_parts WHERE season_id = ? AND name = ?",
 		sp.SeasonId, sp.Name,
-	).Scan(&sp.Id, &sp.SeasonId, &sp.SuccessorId, &sp.CompetitionTypeId, &sp.Name, &sp.IsCurrent)
+	).Scan(&sp.Id, &sp.SeasonId, &sp.PreviousId, &sp.CompetitionTypeId, &sp.Name, &sp.IsCurrent)
 
 	if err == nil {
 		// Záznam nalezen
@@ -293,8 +293,8 @@ func (sp SeasonPart) FindOrCreate(db *sql.DB) (SeasonPart, error) {
 
 	// Záznam neexistuje, vytvoříme nový
 	result, err := db.Exec(
-		"INSERT INTO season_parts (season_id, successor_id, competition_type_id, name, is_current) VALUES (?, ?, ?, ?, ?)",
-		sp.SeasonId, sp.SuccessorId, sp.CompetitionTypeId, sp.Name, false,
+		"INSERT INTO season_parts (season_id, previous_id, competition_type_id, name, is_current) VALUES (?, ?, ?, ?, ?)",
+		sp.SeasonId, sp.PreviousId, sp.CompetitionTypeId, sp.Name, false,
 	)
 	if err != nil {
 		return sp, err

@@ -57,8 +57,10 @@ func InitDb(db *sql.DB) {
 		`CREATE TABLE "competitions" (
 			"id" integer primary key autoincrement not null,
 			"country_id" integer not null,
+			"previous_id" integer,
 			"name" varchar not null,
-			foreign key("country_id") references "countries"("id")
+			foreign key("country_id") references "countries"("id"),
+			foreign key("previous_id") references "competitions"("id")
 		)`,
 		`CREATE TABLE "countries" (
 			"id" integer primary key autoincrement not null,
@@ -97,12 +99,12 @@ func InitDb(db *sql.DB) {
 		`CREATE TABLE "season_parts" (
 			"id" integer primary key autoincrement not null,
 			"season_id" integer not null,
-			"successor_id" integer,
+			"previous_id" integer,
 			"competition_type_id" integer not null,
 			"is_current" tinyint(1) not null default '0',
 			"name" varchar not null,
 			foreign key("season_id") references "seasons"("id"),
-			foreign key("successor_id") references "season_parts"("id"),
+			foreign key("previous_id") references "season_parts"("id"),
 			foreign key("competition_type_id") references "competition_types"("id")
 		)`,
 		`CREATE TABLE "seasons" (
